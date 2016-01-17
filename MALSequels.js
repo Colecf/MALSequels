@@ -14,7 +14,28 @@
     }
     completedAnime = completedAnime.add(this);
   });
+  var hud = $('<div style="position: fixed; top: 50px; left: 50px; width: 300px; height: 200px; background-color: green; padding: 5px; font-size: 20px;">Loading... <span id="colecf-loadingcompleted">0</span>/'+completedAnime.length+'</div>');
+  $('body').append(hud);
+
+  var completed = 0;
+  var results = {};
   completedAnime.each(function() {
-    console.log($(this).find('a.animetitle').text());
+    var a = $(this).find('a.animetitle');
+    console.log(a.text());
+    $.get(a.attr('href'), function(result) {
+      var relatedTable = $(result).find('table.anime_detail_related_anime');
+      relatedTable.find('tr').each(function() {
+        var type = $(this).find('td:first-child').text();
+        type = type.substring(0, type.length-1);
+        if(!results[type])
+          results[type] = [];
+        results[type].push($(this).find('td:last-child').text());
+      });
+      completed++;
+      hud.find('#colecf-loadingcompleted').text(completed);
+      if(completed == completedAnime.length) {
+        console.log(results);
+      }
+    });
   });
 })();
