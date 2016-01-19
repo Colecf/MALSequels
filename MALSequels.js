@@ -15,9 +15,9 @@
       for(var i=0; i<results[type].length; i++) {
         section.append('<a class="colecf-relatedanimelink" target="_blank" style="padding: 2px; display: block; background-color: lightgrey; border-radius: 5px; margin: 1px;" href="'+results[type][i].link+'">'+results[type][i].title+'</a>');
       }
-      section.find('a.colecf-relatedanimelink').toggle();
       hud.append(section);
     }
+    $('#colecf-hud').find('a.colecf-relatedanimelink').hide();
   }
 
   if(window.location.href.indexOf('myanimelist.net/animelist/') == -1) {
