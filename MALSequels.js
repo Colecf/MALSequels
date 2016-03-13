@@ -4,7 +4,9 @@
     var hud = $('#colecf-hud');
     hud.empty();
     hud.css('padding', '0px');
-    
+    hud.css('height', '600px');
+    hud.css('border', '1px solid black');
+
     for(var type in results) {
       var sectionTitle = $('<div style="color: blue; margin: 5px;">'+type+'</div>');
       var section = $('<div style="margin: 5px; background-color: grey; padding: 2px;" id="colecf-section-'+type.replace(/\s/g, '')+'"></div>');
@@ -26,13 +28,12 @@
   }
 
   $('#colecf-hud').remove();
-  var hud = $('<div id="colecf-hud" style="position: fixed; top: 50px; left: 50px; width: 300px; height: 600px; background-color: green; padding: 5px; font-size: 20px; overflow: auto;">Loading... <span id="colecf-loadingcompleted">0</span>/?</div>');
+  var hud = $('<div id="colecf-hud" style="position: fixed; top: 50px; left: 50px; width: 300px; background-color: green; padding: 5px; font-size: 20px; overflow: auto;">Loading... <span id="colecf-loadingcompleted">0</span>/?</div>');
   $('body').append(hud);
 
   var completedAnime = $([]);
   var done = false;
   $('table.header_completed ~ table').each(function() {
-    console.log($(this).nextAll('table td.category_totals').length);
     if($(this).text().replace(/\s/g, '').indexOf('AnimeTitle') != -1) {
       return;
     }
@@ -46,31 +47,28 @@
 
   var completedAnimeTitles = [];
   completedAnime.each(function() {
-    completedAnimeTitles.push($(this).find('a.animetitle').text());
-    console.log(completedAnimeTitles.length);
+    completedAnimeTitles.push($(this).find('a.animetitle').text().trim());
   });
-  completedAnimeTitles.contains = function(search) {
-    for(var i=0; i< completedAnimeTitles.length; i++) {
-      if(completedAnimeTitles[i] === search)
-        return true;
-    }
-    return false;
-  };
 
   var completed = 0;
   var results = {};
   completedAnime.each(function() {
     var a = $(this).find('a.animetitle');
-    console.log(a.text());
     $.get(a.attr('href'), function(result) {
       var relatedTable = $(result).find('table.anime_detail_related_anime');
       relatedTable.find('tr').each(function() {
         var type = $(this).find('td:first-child').text();
         type = type.substring(0, type.length-1);
         $(this).find('td:last-child a').each(function() {
-          var title = $(this).text();
+          var title = $(this).text().trim();
           var link = $(this).attr('href');
-          if(completedAnimeTitles.contains(title))
+
+          //In case we've already watched it
+          if($.inArray(title, completedAnimeTitles) > -1)
+            return;
+
+          //In case this anime is related to multiple other anime
+          if(results[type] && $.inArray(title, results[type].map(function(obj){return obj.title;})) > -1)
             return;
           if(!results[type])
             results[type] = [];
