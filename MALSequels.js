@@ -1,4 +1,8 @@
 (function() {
+  if(window.location.href.indexOf('myanimelist.net/animelist/') == -1) {
+    alert('Must be run on myanimelist.net/animelist/username');
+    return;
+  }
 
   function displayData(results) {
     var hud = $('#colecf-hud');
@@ -22,12 +26,9 @@
     $('#colecf-hud').find('a.colecf-relatedanimelink').hide();
   }
 
-  if(window.location.href.indexOf('myanimelist.net/animelist/') == -1) {
-    alert('Must be run on myanimelist.net/animelist/username');
-    return;
+  if($('#colecf-hud')) {
+    $('#colecf-hud').remove();
   }
-
-  $('#colecf-hud').remove();
   var hud = $('<div id="colecf-hud" style="position: fixed; top: 50px; left: 50px; width: 300px; background-color: green; padding: 5px; font-size: 20px; overflow: auto;">Loading... <span id="colecf-loadingcompleted">0</span>/?</div>');
   $('body').append(hud);
 
@@ -50,36 +51,51 @@
     completedAnimeTitles.push($(this).find('a.animetitle').text().trim());
   });
 
-  var completed = 0;
   var results = {};
-  completedAnime.each(function() {
-    var a = $(this).find('a.animetitle');
-    $.get(a.attr('href'), function(result) {
-      var relatedTable = $(result).find('table.anime_detail_related_anime');
-      relatedTable.find('tr').each(function() {
-        var type = $(this).find('td:first-child').text();
-        type = type.substring(0, type.length-1);
-        $(this).find('td:last-child a').each(function() {
-          var title = $(this).text().trim();
-          var link = $(this).attr('href');
-
-          //In case we've already watched it
-          if($.inArray(title, completedAnimeTitles) > -1)
-            return;
-
-          //In case this anime is related to multiple other anime
-          if(results[type] && $.inArray(title, results[type].map(function(obj){return obj.title;})) > -1)
-            return;
-          if(!results[type])
-            results[type] = [];
-          results[type].push({title: title, link: link});
+  function loadThese(toLoad, start, cb) {
+    var completed = 0;
+    toLoad.each(function() {
+      var a = $(this).find('a.animetitle');
+      $.get(a.attr('href'), function(result) {
+        var relatedTable = $(result).find('table.anime_detail_related_anime');
+        relatedTable.find('tr').each(function() {
+          var type = $(this).find('td:first-child').text();
+          type = type.substring(0, type.length-1);
+          $(this).find('td:last-child a').each(function() {
+            var title = $(this).text().trim();
+            var link = $(this).attr('href');
+            
+            //In case we've already watched it
+            if($.inArray(title, completedAnimeTitles) > -1)
+              return;
+            
+            //In case this anime is related to multiple other anime
+            if(results[type] && $.inArray(title, results[type].map(function(obj){return obj.title;})) > -1)
+              return;
+            if(!results[type])
+              results[type] = [];
+            results[type].push({title: title, link: link});
+          });
         });
+        completed++;
+        hud.find('#colecf-loadingcompleted').text(completed+start);
+        if(completed == toLoad.length) {
+          cb();
+        }
       });
-      completed++;
-      hud.find('#colecf-loadingcompleted').text(completed);
-      if(completed == completedAnime.length) {
-        displayData(results);
-      }
     });
-  });
+  }
+  
+  var start = 0;
+  function loadAll() {
+    if(start <= completedAnime.length-5) {
+      setTimeout(function() {
+        loadThese(completedAnime.slice(start, start+5), start, loadAll);
+        start += 5;
+      }, start === 0 ? 0 : 3000);
+    } else {
+      displayData(results);
+    }
+  }
+  loadAll();
 })();
