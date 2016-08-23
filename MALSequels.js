@@ -4,6 +4,11 @@
     return;
   }
 
+  function getUsername() {
+    var url = window.location.href;
+    return url.substring(url.lastIndexOf('/')+1);
+  }
+
   function displayData(results) {
     var hud = $('#colecf-hud');
     hud.empty();
@@ -11,7 +16,10 @@
     hud.css('height', '600px');
     hud.css('border', '1px solid black');
 
+    var saveData = "<h2>Related to what "+getUsername()+" has watched</h2>";
+
     for(var type in results) {
+      saveData += type+'<br/><br/>';
       var sectionTitle = $('<div style="color: blue; margin: 5px;">'+type+'</div>');
       var section = $('<div style="margin: 5px; background-color: grey; padding: 2px;" id="colecf-section-'+type.replace(/\s/g, '')+'"></div>');
       sectionTitle.click(function() {
@@ -20,10 +28,19 @@
       section.append(sectionTitle);
       for(var i=0; i<results[type].length; i++) {
         section.append('<a class="colecf-relatedanimelink" target="_blank" style="padding: 2px; display: block; background-color: lightgrey; border-radius: 5px; margin: 1px;" href="'+results[type][i].link+'">'+results[type][i].title+'</a>');
+        saveData += '<a target="_blank" href="http://myanimelist.net'+results[type][i].link+'">'+results[type][i].title+'</a><br/>';
       }
+      saveData += '<br/>';
       hud.append(section);
     }
-    $('#colecf-hud').find('a.colecf-relatedanimelink').hide();
+    hud.find('a.colecf-relatedanimelink').hide();
+
+    var saveButton = $('<button id="colecf-savebutton">Save</button>');
+    saveButton.click(function() {
+      window.open('data:text/html;encoding=utf-8,'+
+                  encodeURIComponent(saveData));
+    });
+    hud.prepend(saveButton);
   }
 
   if($('#colecf-hud')) {
